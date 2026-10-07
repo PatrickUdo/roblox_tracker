@@ -56,6 +56,9 @@ return [
 
             Token abilities: `projects:read`, `projects:write`, `items:read`, `items:write`, `comments:write`,
             `inbox:write`. A token can be limited to one project.
+
+            The web server may refuse `PATCH`, `PUT` and `DELETE`. Send those as `POST` with the header
+            `X-HTTP-Method-Override: PATCH` (or `PUT`, `DELETE`); the API treats them the same.
             MD,
     ],
 

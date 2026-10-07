@@ -101,6 +101,32 @@ it('updates an item', function () {
         ->assertJsonPath('data.assignee.id', $this->user->id);
 });
 
+it('updates an item sent as POST with a method override', function () {
+    Item::factory()->for($this->project)->create(['priority' => 'low']);
+    Sanctum::actingAs($this->user, ['items:write']);
+
+    $this->postJson('/api/v1/items/BONKBOX-1', ['assignee_id' => $this->user->id], ['X-HTTP-Method-Override' => 'PATCH'])
+        ->assertOk()
+        ->assertJsonPath('data.assignee.id', $this->user->id);
+});
+
+it('answers a request the web server refused with the refusal, not the route', function () {
+    Item::factory()->for($this->project)->create();
+    Sanctum::actingAs($this->user, ['items:read', 'items:write']);
+
+    // Apache's ErrorDocument for a blocked PATCH: a GET to the same URL, marked as an error.
+    $this->withServerVariables(['REDIRECT_STATUS' => '403', 'REDIRECT_REQUEST_METHOD' => 'PATCH'])
+        ->getJson('/api/v1/items/BONKBOX-1')
+        ->assertForbidden()
+        ->assertJsonPath('message', 'The web server refused this PATCH request. Send it as POST with the header X-HTTP-Method-Override: PATCH.')
+        ->assertJsonMissingPath('data');
+
+    // mod_rewrite marks every request it hands to index.php with 200; those run as usual.
+    $this->withServerVariables(['REDIRECT_STATUS' => '200'])
+        ->getJson('/api/v1/items/BONKBOX-1')
+        ->assertOk();
+});
+
 it('transitions an item and rejects skipped steps with 422', function () {
     Item::factory()->for($this->project)->create();
     Sanctum::actingAs($this->user, ['items:write']);
