@@ -1,0 +1,22 @@
+<?php
+
+namespace Database\Factories;
+
+use App\Models\Label;
+use App\Models\Project;
+use Illuminate\Database\Eloquent\Factories\Factory;
+
+/**
+ * @extends Factory<Label>
+ */
+class LabelFactory extends Factory
+{
+    public function definition(): array
+    {
+        return [
+            'project_id' => Project::factory(),
+            'name' => fake()->unique()->word(),
+            'color' => fake()->hexColor(),
+        ];
+    }
+}
